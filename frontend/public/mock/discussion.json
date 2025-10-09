@@ -1,0 +1,7 @@
+{
+  "status": "ok",
+  "data": [
+    { "id": "d1", "author": "Aarav", "text": "When do we use variables?", "createdAt": 1690900000000 },
+    { "id": "d2", "author": "Faculty", "text": "Variables store unknown values.", "createdAt": 1690903600000 }
+  ]
+}

@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Offline Playback (Static)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 16px; background: #f8fafc; }
+    header { display:flex; justify-content: space-between; align-items:center; margin-bottom: 12px; }
+    .btn { background: #155EEF; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+    .muted { color: #6b7280; font-size: 12px; }
+    .wrap { display:grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+    .stage, .panel { background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; }
+    .slide { width: 100%; background: #f1f5f9; border-radius: 8px; aspect-ratio: 4/3; display:flex; align-items:center; justify-content:center; }
+    .slide img { max-width:100%; max-height:100%; }
+    ul { list-style:none; padding:0; margin:0; }
+    li { display:flex; align-items:center; gap:8px; padding:6px; border-radius:6px; cursor:pointer; }
+    li.active { background:#e0e7ff; }
+    input[type="file"] { margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Offline Playback</h1>
+    <div>
+      <label class="btn">
+        Choose Folder
+        <input id="folder" type="file" webkitdirectory directory multiple style="display:none"/>
+      </label>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="stage">
+      <div class="muted" id="title">No package loaded</div>
+      <div class="slide" style="margin-top:8px;">
+        <img id="img" alt="Slide"/>
+      </div>
+      <div style="margin-top:8px;">
+        <audio id="audio" controls></audio>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>Slides</h3>
+      <ul id="list"></ul>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      files: new Map(), // path -> File
+      manifest: null,
+      current: 0,
+    };
+
+    function normalizePath(p) {
+      // Ensure slash style and no leading './'
+      return p.replace(/\\/g, '/').replace(/^\.\/+/, '');
+    }
+
+    function loadFiles(fileList) {
+      state.files.clear();
+      for (const f of fileList) {
+        const path = normalizePath(f.webkitRelativePath || f.name);
+        state.files.set(path, f);
+      }
+    }
+
+    async function readText(path) {
+      const f = state.files.get(path);
+      if (!f) throw new Error(`Missing file: ${path}`);
+      return await f.text();
+    }
+
+    function fileUrl(path) {
+      const f = state.files.get(path);
+      if (!f) return '';
+      return URL.createObjectURL(f);
+    }
+
+    async function loadManifest() {
+      // try typical locations
+      const candidates = ['manifest.json', './manifest.json'];
+      for (const c of candidates) {
+        if (state.files.has(c)) {
+          const txt = await readText(c);
+          return JSON.parse(txt);
+        }
+      }
+      // fallback: search
+      for (const [p] of state.files) {
+        if (p.endsWith('manifest.json')) {
+          const txt = await readText(p);
+          return JSON.parse(txt);
+        }
+      }
+      throw new Error('manifest.json not found in selected folder.');
+    }
+
+    function renderList() {
+      const ul = document.getElementById('list');
+      ul.innerHTML = '';
+      (state.manifest.slides || []).forEach((s, idx) => {
+        const li = document.createElement('li');
+        li.textContent = `Slide ${idx+1} (${s.durationSec || '?'}s)`;
+        if (idx === state.current) li.classList.add('active');
+        li.onclick = () => { state.current = idx; renderStage(); renderList(); };
+        ul.appendChild(li);
+      });
+    }
+
+    function renderStage() {
+      const s = state.manifest.slides[state.current];
+      document.getElementById('title').textContent = `${state.manifest.title} — ${state.current+1}/${state.manifest.slides.length}`;
+      document.getElementById('img').src = fileUrl(s.image);
+      const audio = document.getElementById('audio');
+      audio.src = fileUrl(s.audio);
+      audio.play().catch(()=>{});
+    }
+
+    document.getElementById('folder').addEventListener('change', async (ev) => {
+      try {
+        loadFiles(ev.target.files);
+        state.manifest = await loadManifest();
+        if (!Array.isArray(state.manifest.slides)) throw new Error('Invalid manifest: slides missing.');
+        state.current = 0;
+        renderList();
+        renderStage();
+      } catch (e) {
+        alert(e.message);
+      }
+    });
+  </script>
+</body>
+</html>

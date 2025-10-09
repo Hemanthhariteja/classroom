@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Faculty Dashboard (Static Demo)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 16px; background: #f7f7f8; }
+    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .btn { background: #155EEF; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+    .card { background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+    .muted { color: #6b7280; font-size: 12px; }
+    .pill { font-size: 12px; padding: 2px 8px; border-radius: 999px; border: 1px solid #e5e7eb; display: inline-block; }
+    .pill.live { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+    .pill.scheduled { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Faculty Dashboard</h1>
+    <button class="btn" onclick="createClass()">+ New Class</button>
+  </header>
+
+  <section>
+    <div class="grid" id="classes"></div>
+  </section>
+
+  <template id="card-tpl">
+    <div class="card">
+      <h3 class="title"></h3>
+      <div class="muted start"></div>
+      <div style="margin:8px 0;">
+        <span class="pill status"></span>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn" onclick="startClass(event)">Start</button>
+        <button class="btn" style="background:#10b981" onclick="packageClass(event)">Package</button>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    const sample = [
+      { id: 'cls_001', title: 'Intro to AI', startsAt: '2025-10-29T09:00:00Z', status: 'scheduled' },
+      { id: 'cls_002', title: 'Data Structures', startsAt: '2025-11-05T09:00:00Z', status: 'live' }
+    ];
+
+    function fmtDate(s) {
+      const d = new Date(s);
+      return d.toLocaleString();
+    }
+
+    function render() {
+      const root = document.getElementById('classes');
+      root.innerHTML = '';
+      for (const c of sample) {
+        const tpl = document.getElementById('card-tpl').content.cloneNode(true);
+        tpl.querySelector('.title').textContent = c.title;
+        tpl.querySelector('.start').textContent = `Starts: ${fmtDate(c.startsAt)}`;
+        const pill = tpl.querySelector('.status');
+        pill.textContent = c.status;
+        pill.classList.add(c.status === 'live' ? 'live' : 'scheduled');
+        tpl.querySelector('.card').dataset.id = c.id;
+        root.appendChild(tpl);
+      }
+    }
+
+    function createClass() {
+      alert('This is a static demo. In the real app, this opens a create-class form.');
+    }
+    function startClass(ev) {
+      const id = ev.target.closest('.card').dataset.id;
+      alert('Start class ' + id + ' (WS signaling, RTC flows in real app).');
+    }
+    function packageClass(ev) {
+      const id = ev.target.closest('.card').dataset.id;
+      alert('Request media package for ' + id + ' (POST /api/media/package).');
+    }
+
+    render();
+  </script>
+</body>
+</html>

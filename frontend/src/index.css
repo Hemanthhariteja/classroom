@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0b0f0f;
+  --card: #111616;
+  --accent: #14f195;
+  --accent-muted: #0bd179;
+  --text: #e6fff3;
+  --muted: #8adbb8;
+
+  /* Purple/indigo hero palette (references 6/7/8) */
+  --indigo-1: #0b0f24;
+  --indigo-2: #171a3a;
+  --indigo-3: #2b1d5b;
+  --purple-1: #5b21b6; /* indigo-700 */
+  --purple-2: #7c3aed; /* purple-600 */
+  --magenta-1: #a21caf; /* fuchsia-700 */
+  --pink-1: #db2777;   /* pink-600 */
+}
+
+html, body, #root { height: 100%; }
+
+/* Default app bg (kept for inner pages) with subtle auras */
+body {
+  color: var(--text);
+  background:
+    radial-gradient(700px 700px at -10% -10%, rgba(20,241,149,0.08), transparent 40%),
+    radial-gradient(800px 800px at 110% -10%, rgba(11,209,121,0.08), transparent 35%),
+    linear-gradient(#0b0f0f, #0b0f0f);
+}
+body::after {
+  content:"";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 18px 18px;
+  mask-image: radial-gradient(80% 60% at 50% 40%, #000 60%, transparent 100%);
+}
+
+a { color: var(--accent); }
+.scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: #173a34; border-radius: 999px; }
+
+.card {
+  @apply bg-card/80 border border-border rounded-lg shadow-glow;
+}
+.card-hover {
+  @apply transition hover:shadow-[0_0_0_1px_rgba(20,241,149,0.22),0_0_28px_rgba(20,241,149,0.12)];
+}
+.btn {
+  @apply inline-flex items-center justify-center rounded-md bg-accent text-black font-medium px-4 py-2 hover:bg-accentMuted transition;
+}
+.btn-ghost {
+  @apply inline-flex items-center justify-center rounded-md border border-border bg-card text-textPrimary px-3 py-2 hover:border-accent/40 hover:text-accent transition;
+}
+.input { @apply bg-card border border-border rounded-md px-3 py-2 text-textPrimary placeholder:text-textMuted; }
+.badge { @apply px-2 py-0.5 rounded-full text-xs bg-accent/10 text-accent border border-accent/20; }
+.section-title { @apply flex items-center justify-between mb-3; }
+.section-title h3 { @apply font-semibold; }
+.kbd { @apply px-2 py-0.5 rounded border border-border text-xs text-textMuted; }
+
+/* Purple Glass Hero (references 6/7/8) */
+.hero-wrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  background: radial-gradient(1000px 700px at 20% 10%, rgba(124,58,237,0.35), transparent 50%),
+              radial-gradient(1000px 700px at 80% 10%, rgba(2,132,199,0.35), transparent 55%),
+              linear-gradient(180deg, var(--indigo-2), var(--indigo-1));
+  box-shadow:
+    0 0 0 1px rgba(124,58,237,0.2),
+    0 25px 60px rgba(124,58,237,0.12),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.glass {
+  backdrop-filter: blur(12px);
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04),
+    0 20px 40px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+  border-radius: 16px;
+}
+.btn-gradient {
+  background: linear-gradient(90deg, #ff8a00, #e52e71);
+  color: white;
+  @apply rounded-md px-4 py-2 font-medium;
+}
+.btn-gradient:hover { filter: brightness(1.05); }
+
+/* Tiny 3D rotation for accent models */
+@keyframes spin3d {
+  0%   { transform: rotateX(0) rotateY(0) rotateZ(0); }
+  50%  { transform: rotateX(10deg) rotateY(180deg) rotateZ(6deg); }
+  100% { transform: rotateX(0) rotateY(360deg) rotateZ(0); }
+}
+.tilt-3d {
+  transform-style: preserve-3d;
+  animation: spin3d 18s linear infinite;
+  will-change: transform;
+  filter: drop-shadow(0 25px 40px rgba(124,58,237,0.25));
+}

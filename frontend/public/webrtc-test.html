@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC Broadcast Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .section { border: 1px solid #ddd; margin: 10px 0; padding: 15px; border-radius: 5px; }
+        .teacher { background-color: #f0f8ff; }
+        .student { background-color: #f8f8f0; }
+        button { padding: 10px 20px; margin: 5px; }
+        #logs { background: #f5f5f5; padding: 10px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 12px; }
+        audio { width: 100%; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WebRTC Audio Broadcast Test</h1>
+        
+        <div class="section teacher">
+            <h2>🎓 Teacher Panel</h2>
+            <button id="startTeacher">Start Broadcasting</button>
+            <button id="stopTeacher" disabled>Stop Broadcasting</button>
+            <div id="teacherStatus">Not started</div>
+        </div>
+        
+        <div class="section student">
+            <h2>👨‍🎓 Student Panel</h2>
+            <button id="joinStudent">Join as Student</button>
+            <button id="leaveStudent" disabled>Leave Class</button>
+            <audio id="studentAudio" controls></audio>
+            <div id="studentStatus">Not connected</div>
+        </div>
+        
+        <div class="section">
+            <h2>📊 Debug Logs</h2>
+            <button onclick="clearLogs()">Clear Logs</button>
+            <div id="logs"></div>
+        </div>
+    </div>
+
+    <script>
+        const classId = '68cced26157d87e24fee03ce';
+        const wsUrl = 'ws://localhost:3000/ws';
+        let teacherController = null;
+        let studentController = null;
+
+        function log(message) {
+            const logs = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            logs.innerHTML += `[${timestamp}] ${message}\n`;
+            logs.scrollTop = logs.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+        }
+
+        // Teacher functions
+        document.getElementById('startTeacher').onclick = async () => {
+            try {
+                log('🎓 Teacher: Starting broadcast...');
+                document.getElementById('teacherStatus').textContent = 'Starting...';
+                
+                // First check if microphone is accessible
+                log('🎓 Teacher: Requesting microphone access...');
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                log('🎓 Teacher: Microphone access granted');
+                
+                // Import WebRTC client
+                const { startFacultyBroadcast } = await import('/src/utils/webRTCClient.js');
+                
+                teacherController = await startFacultyBroadcast({
+                    wsUrl,
+                    token: '',
+                    classId,
+                    onEvent: (event) => {
+                        log(`🎓 Teacher Event: ${event}`);
+                        if (event.startsWith('student-connected:')) {
+                            const studentId = event.split(':')[1];
+                            log(`🎓 Teacher: Student ${studentId} connected successfully!`);
+                            document.getElementById('teacherStatus').textContent = `🔴 Broadcasting to ${teacherController.getConnectedStudents()} students`;
+                        }
+                    }
+                });
+                
+                document.getElementById('startTeacher').disabled = true;
+                document.getElementById('stopTeacher').disabled = false;
+                document.getElementById('teacherStatus').textContent = '🔴 Broadcasting (waiting for students)';
+                log('🎓 Teacher: Broadcast started successfully - waiting for students to join');
+                
+            } catch (error) {
+                log(`🎓 Teacher Error: ${error.message}`);
+                console.error('Teacher Error Details:', error);
+                document.getElementById('teacherStatus').textContent = 'Error: ' + error.message;
+            }
+        };
+
+        document.getElementById('stopTeacher').onclick = () => {
+            if (teacherController) {
+                teacherController.stop();
+                teacherController = null;
+                log('🎓 Teacher: Broadcast stopped');
+            }
+            document.getElementById('startTeacher').disabled = false;
+            document.getElementById('stopTeacher').disabled = true;
+            document.getElementById('teacherStatus').textContent = 'Not started';
+        };
+
+        // Student functions
+        document.getElementById('joinStudent').onclick = async () => {
+            try {
+                log('👨‍🎓 Student: Joining class...');
+                document.getElementById('studentStatus').textContent = 'Connecting...';
+                
+                const { webRTCClient } = await import('/src/utils/webRTCClient.js');
+                
+                studentController = webRTCClient({ wsUrl, token: '' });
+                
+                await studentController.joinClass(classId, 
+                    (remoteStream) => {
+                        log('👨‍🎓 Student: 🎉 RECEIVED AUDIO STREAM FROM TEACHER!');
+                        const audio = document.getElementById('studentAudio');
+                        audio.srcObject = remoteStream;
+                        
+                        // Check if stream has audio tracks
+                        const audioTracks = remoteStream.getAudioTracks();
+                        log(`👨‍🎓 Student: Stream has ${audioTracks.length} audio tracks`);
+                        audioTracks.forEach((track, i) => {
+                            log(`👨‍🎓 Student: Track ${i}: ${track.label}, enabled: ${track.enabled}, muted: ${track.muted}`);
+                        });
+                        
+                        audio.play().then(() => {
+                            log('👨‍🎓 Student: Audio playback started successfully');
+                            document.getElementById('studentStatus').textContent = '🔊 Receiving live audio';
+                        }).catch(e => {
+                            log(`👨‍🎓 Student: Audio play failed: ${e.message}`);
+                            document.getElementById('studentStatus').textContent = '⚠️ Audio received but play failed';
+                        });
+                    },
+                    (event) => {
+                        log(`👨‍🎓 Student Event: ${event}`);
+                        if (event === 'webrtc-failed') {
+                            document.getElementById('studentStatus').textContent = 'Connection failed';
+                        } else if (event === 'ws-error') {
+                            document.getElementById('studentStatus').textContent = 'WebSocket error';
+                        }
+                    }
+                );
+                
+                document.getElementById('joinStudent').disabled = true;
+                document.getElementById('leaveStudent').disabled = false;
+                log('👨‍🎓 Student: Joined class successfully - waiting for teacher audio...');
+                document.getElementById('studentStatus').textContent = 'Connected - waiting for teacher';
+                
+            } catch (error) {
+                log(`👨‍🎓 Student Error: ${error.message}`);
+                console.error('Student Error Details:', error);
+                document.getElementById('studentStatus').textContent = 'Error: ' + error.message;
+            }
+        };
+
+        document.getElementById('leaveStudent').onclick = () => {
+            if (studentController) {
+                studentController.leave();
+                studentController = null;
+                log('👨‍🎓 Student: Left class');
+            }
+            const audio = document.getElementById('studentAudio');
+            audio.srcObject = null;
+            document.getElementById('joinStudent').disabled = false;
+            document.getElementById('leaveStudent').disabled = true;
+            document.getElementById('studentStatus').textContent = 'Not connected';
+        };
+
+        log('WebRTC Test Page Loaded - Class ID: ' + classId);
+    </script>
+</body>
+</html>
