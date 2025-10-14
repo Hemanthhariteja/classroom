@@ -38,6 +38,42 @@ export default function useAuth() {
     initializeAuth()
   }, [])
 
+  // Simple login without OTP (primary method)
+  const login = async (phone, role = 'student') => {
+    setLoading(true); setError(null)
+    try {
+      const res = await api.login(phone, role)
+      console.log('[AUTH] Login Response:', res) // Debug log
+      if (res.status === 'ok' && res.token) {
+        await setAuthToken(res.token)
+        const userData = { 
+          phone, 
+          role: res.user?.role || role,
+          id: res.user?.id,
+          sessionId: Date.now() + Math.random() // Unique session ID
+        }
+        setUser(userData)
+        // Store user data in sessionStorage for tab-specific sessions
+        sessionStorage.setItem('rcc-user', JSON.stringify(userData))
+        // Also store in localStorage as fallback
+        localStorage.setItem('rcc-user', JSON.stringify(userData))
+        return res
+      } else {
+        const errorMsg = res.message || 'Login failed'
+        setError(errorMsg)
+        return { status: 'error', message: errorMsg }
+      }
+    } catch (err) {
+      console.error('[AUTH] Login Error:', err) // Debug log
+      const errorMsg = err.message || 'Login failed'
+      setError(errorMsg)
+      return { status: 'error', message: errorMsg }
+    } finally { 
+      setLoading(false) 
+    }
+  }
+
+  // Legacy OTP methods (kept for backward compatibility)
   const sendOTP = async (phone, role = 'student') => {
     setLoading(true); setError(null)
     try {
@@ -97,5 +133,5 @@ export default function useAuth() {
     setError(null)
   }
 
-  return { user, loading, error, sendOTP, verifyOTP, logout }
+  return { user, loading, error, login, sendOTP, verifyOTP, logout }
 }

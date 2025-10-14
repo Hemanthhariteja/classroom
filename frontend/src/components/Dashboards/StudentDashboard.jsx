@@ -39,6 +39,11 @@ export default function StudentDashboard({ user }) {
               <h3>Live Classes</h3>
               <span className="text-xs text-green-400">● 2 active</span>
             </div>
+            <div className="mb-3 p-2 bg-blue-500/10 rounded border border-blue-500/20">
+              <p className="text-xs text-blue-300">
+                💡 <strong>Tip:</strong> Click the "Join" button once the teacher starts the live class to participate in real-time.
+              </p>
+            </div>
             <div className="grid md:grid-cols-2 gap-3">
               <div className="glass p-3 border-l-2 border-green-400">
                 <div className="flex items-center justify-between">
@@ -100,9 +105,14 @@ export default function StudentDashboard({ user }) {
         <aside className="card p-4">
           <h4 className="font-semibold mb-2">Student Actions</h4>
           <ul className="space-y-2">
-            <li><Link className="btn w-full" to="/student/live/68cced26157d87e24fee03ce">
-              <Radio size={16} /> Join Live Class
-            </Link></li>
+            <li>
+              <Link className="btn w-full" to="/student/live/68cced26157d87e24fee03ce">
+                <Radio size={16} /> Join Live Class
+              </Link>
+              <p className="text-[10px] text-textMuted mt-1 ml-1">
+                Click to join when class goes live
+              </p>
+            </li>
             <li><Link className="btn w-full" to="/student/offline">
               <Download size={16} /> Offline Download
             </Link></li>

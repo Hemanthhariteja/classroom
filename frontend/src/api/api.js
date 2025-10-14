@@ -133,6 +133,12 @@ export const api = {
     return res.json()
   },
   // Auth shortcuts with role support
+  // Simple login without OTP (primary method)
+  login: (phone, role = 'student') => request('/auth/login', { 
+    method: 'POST', 
+    body: JSON.stringify({ phone, role }) 
+  }),
+  // Legacy OTP methods (kept for backward compatibility)
   sendOTP: (phone, role = 'student') => request('/auth/send-otp', { 
     method: 'POST', 
     body: JSON.stringify({ phone, role }) 

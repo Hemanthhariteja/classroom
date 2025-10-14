@@ -4,10 +4,8 @@ import useAuth from '../hooks/useAuth.js'
 import LowPolyBackground from '../components/Shared/LowPolyBackground.jsx'
 
 export default function TeacherLogin() {
-  const { loading, error, sendOTP, verifyOTP } = useAuth()
+  const { loading, error, login } = useAuth()
   const [phone, setPhone] = useState('')
-  const [otp, setOtp] = useState('')
-  const [sent, setSent] = useState(false)
   const [message, setMessage] = useState('')
   const navigate = useNavigate()
   const location = useLocation()
@@ -18,28 +16,24 @@ export default function TeacherLogin() {
     const testPhone = urlParams.get('testPhone')
     if (testPhone) {
       setPhone(testPhone)
-      setMessage('Test phone number pre-filled. Ready to send OTP.')
+      setMessage('Test phone number pre-filled. Ready to login.')
     }
   }, [location])
 
-  const onSend = async () => {
-    const res = await sendOTP(phone, 'teacher')
-    if (res.status === 'ok') { 
-      setSent(true)
-      setMessage('OTP sent to your phone (for testing, use any 6-digit code)') 
-    } else { 
-      setMessage(res.message || 'Failed to send OTP') 
-    }
-  }
-
-  const onVerify = async () => {
-    const res = await verifyOTP(phone, otp, 'teacher')
+  const handleLogin = async () => {
+    const res = await login(phone, 'teacher')
     if (res.status === 'ok') {
       setMessage('Logged in successfully! Redirecting...')
       // Navigate immediately without delay
       navigate('/dashboard')
     } else {
-      setMessage(res.message || 'Verification failed')
+      setMessage(res.message || 'Login failed')
+    }
+  }
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && phone && !loading) {
+      handleLogin()
     }
   }
 
@@ -76,47 +70,21 @@ export default function TeacherLogin() {
                 placeholder="+91 9876543210" 
                 value={phone} 
                 onChange={e => setPhone(e.target.value)}
+                onKeyPress={handleKeyPress}
                 type="tel"
               />
               
-              {!sent ? (
-                <button 
-                  className="btn-gradient w-full" 
-                  disabled={loading || !phone} 
-                  onClick={onSend}
-                >
-                  {loading ? 'Sending...' : 'Send OTP'}
-                </button>
-              ) : (
-                <>
-                  <label className="text-sm text-[#d2d6ff]/80 mt-3">Enter 6-digit OTP</label>
-                  <input 
-                    className="input w-full mb-3" 
-                    placeholder="123456"
-                    value={otp} 
-                    onChange={e => setOtp(e.target.value)}
-                    type="number"
-                    maxLength="6"
-                  />
-                  <button 
-                    className="btn-gradient w-full mb-2" 
-                    disabled={loading || !otp} 
-                    onClick={onVerify}
-                  >
-                    {loading ? 'Verifying...' : 'Verify & Login'}
-                  </button>
-                  <button 
-                    className="btn-ghost w-full text-sm" 
-                    onClick={() => setSent(false)}
-                  >
-                    Change Phone Number
-                  </button>
-                </>
-              )}
+              <button 
+                className="btn-gradient w-full" 
+                disabled={loading || !phone} 
+                onClick={handleLogin}
+              >
+                {loading ? 'Logging in...' : 'Login'}
+              </button>
               
               {message && (
                 <div className={`text-sm mt-3 p-2 rounded ${
-                  message.includes('success') || message.includes('sent') 
+                  message.includes('success') 
                     ? 'text-green-400 bg-green-400/10' 
                     : 'text-yellow-400 bg-yellow-400/10'
                 }`}>
@@ -136,7 +104,7 @@ export default function TeacherLogin() {
               
               <div className="mt-4 p-3 bg-purple-500/10 rounded border border-purple-500/20">
                 <p className="text-xs text-purple-300">
-                  <strong>Teachers:</strong> You can create classes, upload slides, record audio, and go live with students.
+                  <strong>Note:</strong> Simplified login without OTP. Just enter your phone number to access the classroom.
                 </p>
               </div>
             </div>

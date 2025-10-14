@@ -4,6 +4,49 @@ import { signToken } from '../config/auth.js';
 import { isPhone } from '../utils/validators.js';
 import { okResponse, errorResponse } from '../utils/responseHelpers.js';
 
+// Simple login without OTP (due to limited verified numbers)
+export const simpleLogin = async (req, res) => {
+  const { phone, role = 'student' } = req.body || {};
+  
+  if (!isPhone(phone)) {
+    return res.status(400).json(errorResponse('invalid_phone'));
+  }
+  
+  if (!['student', 'teacher'].includes(role)) {
+    return res.status(400).json(errorResponse('invalid_role'));
+  }
+  
+  try {
+    // Find or create user with specified role
+    let user = await User.findOne({ phone });
+    if (!user) {
+      user = await User.create({ phone, role });
+    } else {
+      // Update role if different (allows role switching)
+      if (user.role !== role) {
+        user.role = role;
+        await user.save();
+      }
+    }
+    
+    const token = signToken(user);
+    
+    return res.json(okResponse({
+      token,
+      user: { 
+        id: String(user._id), 
+        phone: user.phone, 
+        role: user.role 
+      },
+      message: 'login_successful'
+    }));
+  } catch (error) {
+    console.error('Login error:', error);
+    return res.status(500).json(errorResponse('login_failed'));
+  }
+};
+
+// Legacy OTP handlers (kept for backward compatibility)
 export const sendOtpHandler = async (req, res) => {
   const { phone, role = 'student' } = req.body || {};
   

@@ -14,7 +14,7 @@ export default function Login() {
               <h2 className="text-3xl md:text-5xl font-semibold mb-4">Choose Your Portal</h2>
               <p className="text-[#d2d6ff]/80 max-w-2xl mx-auto">
                 RuralConnect Classroom offers separate portals for students and teachers. 
-                Login with your phone number to receive an SMS verification code.
+                Simply enter your phone number to login - no OTP required.
               </p>
             </div>
 
@@ -79,7 +79,7 @@ export default function Login() {
             <div className="text-center mt-8">
               <div className="h-[1px] w-40 mx-auto bg-gradient-to-r from-transparent via-[#c084fc]/60 to-transparent mb-4" />
               <p className="text-sm text-[#d2d6ff]/60">
-                Need help setting up SMS? Check our <Link to="/sms-setup" className="text-accent hover:underline">SMS Setup Guide</Link>
+                Quick and easy access - no verification codes needed
               </p>
             </div>
           </div>
