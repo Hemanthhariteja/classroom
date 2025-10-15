@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Connection Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
+        .log { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 5px; font-family: monospace; white-space: pre-wrap; max-height: 400px; overflow-y: auto; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        input { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 WebSocket Connection Test</h1>
+        <p>Test WebSocket connectivity to signaling server</p>
+        
+        <div>
+            <input type="text" id="wsUrl" value="ws://localhost:3000/ws" placeholder="WebSocket URL" style="width: 300px;">
+            <button onclick="connectWS()">Connect as Teacher</button>
+            <button onclick="connectStudent()">Connect as Student</button>
+            <button onclick="disconnect()">Disconnect</button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+        
+        <div id="log" class="log">Ready to test WebSocket connection...\n</div>
+    </div>
+
+    <script>
+        let ws = null;
+        const log = document.getElementById('log');
+        
+        function addLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            log.textContent += `[${timestamp}] ${message}\n`;
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function clearLog() {
+            log.textContent = 'Log cleared...\n';
+        }
+        
+        function connectWS() {
+            const url = document.getElementById('wsUrl').value;
+            addLog(`🔌 Attempting to connect to: ${url}`);
+            
+            try {
+                ws = new WebSocket(url);
+                
+                ws.onopen = () => {
+                    addLog('✅ WebSocket connected successfully');
+                    
+                    const teacherId = 'test_teacher_' + Math.random().toString(36).substr(2, 9);
+                    const message = {
+                        type: 'join',
+                        classId: 'test-class',
+                        userId: teacherId,
+                        role: 'teacher'
+                    };
+                    
+                    addLog(`📤 Sending join message: ${JSON.stringify(message)}`);
+                    ws.send(JSON.stringify(message));
+                };
+                
+                ws.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    addLog(`📥 Received: ${JSON.stringify(data)}`);
+                };
+                
+                ws.onerror = (error) => {
+                    addLog(`❌ WebSocket error: ${error}`);
+                };
+                
+                ws.onclose = (event) => {
+                    addLog(`🔌 WebSocket closed: Code ${event.code}, Reason: ${event.reason}`);
+                };
+                
+            } catch (error) {
+                addLog(`❌ Connection failed: ${error.message}`);
+            }
+        }
+        
+        function connectStudent() {
+            const url = document.getElementById('wsUrl').value;
+            addLog(`🔌 Attempting student connection to: ${url}`);
+            
+            try {
+                ws = new WebSocket(url);
+                
+                ws.onopen = () => {
+                    addLog('✅ Student WebSocket connected successfully');
+                    
+                    const studentId = 'test_student_' + Math.random().toString(36).substr(2, 9);
+                    const message = {
+                        type: 'join',
+                        classId: 'test-class',
+                        userId: studentId,
+                        role: 'student'
+                    };
+                    
+                    addLog(`📤 Sending student join: ${JSON.stringify(message)}`);
+                    ws.send(JSON.stringify(message));
+                };
+                
+                ws.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    addLog(`📥 Student received: ${JSON.stringify(data)}`);
+                };
+                
+                ws.onerror = (error) => {
+                    addLog(`❌ Student WebSocket error: ${error}`);
+                };
+                
+                ws.onclose = (event) => {
+                    addLog(`🔌 Student WebSocket closed: Code ${event.code}, Reason: ${event.reason}`);
+                };
+                
+            } catch (error) {
+                addLog(`❌ Student connection failed: ${error.message}`);
+            }
+        }
+        
+        function disconnect() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                addLog('🔌 Disconnecting...');
+                ws.close();
+            } else {
+                addLog('⚠️ No active connection to disconnect');
+            }
+        }
+    </script>
+</body>
+</html>

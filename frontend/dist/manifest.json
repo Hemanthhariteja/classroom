@@ -1,0 +1,15 @@
+{
+  "name": "RuralConnect Classroom",
+  "short_name": "RCC",
+  "description": "Low-bandwidth classroom with audio-first live and offline modes.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0b0f0f",
+  "theme_color": "#14f195",
+  "version": "1.0.1",
+  "icons": [
+    { "src": "/logo.jpg", "sizes": "192x192", "type": "image/jpeg" },
+    { "src": "/logo.jpg", "sizes": "512x512", "type": "image/jpeg" }
+  ]
+}

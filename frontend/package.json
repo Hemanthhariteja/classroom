@@ -7,7 +7,8 @@
     "dev": "vite",
     "dev:teacher": "vite --port 5174",
     "dev:student": "vite --port 5173",
-    "build": "vite build && workbox injectManifest",
+    "build": "vite build",
+    "build:workbox": "vite build && workbox injectManifest",
     "preview": "vite preview"
   },
   "dependencies": {
