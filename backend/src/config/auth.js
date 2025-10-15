@@ -1,7 +1,9 @@
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
+import crypto from 'crypto';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
+// JWT_SECRET will be set by env.js or generated automatically
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(64).toString('hex');
 export const OTP_TTL_SECONDS = parseInt(process.env.OTP_TTL_SECONDS || '300', 10);
 
 export function signToken(user) {
